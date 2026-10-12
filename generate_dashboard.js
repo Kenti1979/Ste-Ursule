@@ -1,0 +1,793 @@
+#!/usr/bin/env node
+/**
+ * generate_dashboard.js
+ * Génère un dashboard HTML de suivi des compétences FWB
+ * Usage : node generate_dashboard.js
+ * Résultat : dashboard.html dans le même dossier
+ */
+
+const mammoth = require('mammoth');
+const fs = require('fs');
+const path = require('path');
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 1. RÉFÉRENTIEL COMPLET (codes uniques par domaine)
+// ─────────────────────────────────────────────────────────────────────────────
+const REFERENTIELS = [
+  {
+    slug: 'autonomie', prefixes: ['AUT'], couleur: '#3B82F6',
+    domaine: 'Autonomie',
+    competences: [
+      // Groupe 1 - Se connaitre
+      {code:'AUT 1.1.1', label:'Reconnaitre et nommer ses différentes émotions'},
+      {code:'AUT 1.1.2', label:'Décrire les sensations ressenties lors d\'émotions'},
+      {code:'AUT 1.1.3', label:'Extérioriser ses émotions par des canaux variés'},
+      {code:'AUT 1.1.4', label:'Expliquer les situations qui ont provoqué une émotion'},
+      {code:'AUT 1.1.5', label:'Utiliser des supports pour se libérer d\'une émotion'},
+      {code:'AUT 1.1.6', label:'Communiquer calmement ses émotions'},
+      {code:'AUT 1.1.7', label:'Reconnaitre que son comportement peut affecter les autres'},
+      {code:'AUT 1.1.8', label:'Utiliser des moyens pour exprimer son émotion'},
+      {code:'AUT 1.1.9', label:'Accepter que l\'autre ait un point de vue différent'},
+      {code:'AUT 1.2.1', label:'Exprimer son émotion du moment'},
+      {code:'AUT 1.2.2', label:'Comprendre que la famille continue d\'exister ailleurs'},
+      {code:'AUT 1.2.3', label:'Nommer la personne qui vient le rechercher'},
+      {code:'AUT 1.2.4', label:'Se détacher de la personne de référence'},
+      {code:'AUT 1.2.5', label:'Reconnaitre les différents intervenants de l\'école'},
+      {code:'AUT 1.2.6', label:'Reconnaitre les différents lieux et leurs fonctions'},
+      {code:'AUT 1.2.7', label:'Connaitre les règles de fonctionnement de la classe'},
+      {code:'AUT 1.2.8', label:'Anticiper la suite de la journée avec des repères'},
+      {code:'AUT 1.2.9', label:'Comprendre et accepter l\'origine d\'un changement'},
+      {code:'AUT 1.3.1', label:'Exprimer ses pensées, opinions, choix, émotions'},
+      {code:'AUT 1.3.2', label:'Demander ou refuser quelque chose ou de l\'aide'},
+      {code:'AUT 1.3.3', label:'Engager une conversation'},
+      {code:'AUT 1.3.4', label:'Connaitre son prénom, nom, âge, lieu de vie'},
+      {code:'AUT 1.3.5', label:'Identifier et communiquer ses gouts et préférences'},
+      {code:'AUT 1.3.6', label:'Identifier ses spécificités par rapport aux autres'},
+      {code:'AUT 1.3.7', label:'Identifier et exprimer ses forces et réussites'},
+      {code:'AUT 1.3.8', label:'Constater qu\'une faiblesse peut être spécifique'},
+      {code:'AUT 1.3.9', label:'Percevoir sa capacité à réaliser une tâche'},
+      {code:'AUT 1.3.10', label:'Prendre conscience de ses progrès'},
+      {code:'AUT 1.3.11', label:'Oser, essayer, prendre des risques, relever des défis'},
+      {code:'AUT 1.3.12', label:'Accepter ses erreurs et recommencer'},
+      // Groupe 2 - Prendre soin de soi
+      {code:'AUT 2.1.1', label:'Explorer librement des mouvements liés à l\'équilibre'},
+      {code:'AUT 2.1.2', label:'Explorer librement des mouvements précis avec ou sans objet'},
+      {code:'AUT 2.1.3', label:'Explorer librement les positions et orientations du corps'},
+      {code:'AUT 2.1.4', label:'Explorer librement les distances et dimensions'},
+      {code:'AUT 2.1.5', label:'Explorer librement des déplacements sur un fond sonore'},
+      {code:'AUT 2.1.6', label:'Utiliser son corps comme référence pour orienter ses mouvements'},
+      {code:'AUT 2.1.7', label:'Interpréter les stimulus pour adapter ses actions'},
+      {code:'AUT 2.1.8', label:'Evaluer adéquatement ses capacités motrices'},
+      {code:'AUT 2.1.9', label:'Réaliser des défis raisonnables'},
+      {code:'AUT 2.1.10', label:'Prendre conscience des mouvements dangereux'},
+      {code:'AUT 2.2.1', label:'Sentir les signes physiques d\'un besoin physiologique'},
+      {code:'AUT 2.2.2', label:'Arrêter son action pour satisfaire un besoin physiologique'},
+      {code:'AUT 2.2.3', label:'Agir pour répondre à un besoin physiologique'},
+      {code:'AUT 2.2.4', label:'Exprimer verbalement un besoin à satisfaire'},
+      // Groupe 3 - Vivre avec les autres
+      {code:'AUT 3.1.1', label:'Connaitre les prénoms des élèves de la classe'},
+      {code:'AUT 3.1.2', label:'Reconnaitre son groupe classe parmi les autres'},
+      {code:'AUT 3.1.3', label:'Réagir aux sollicitations de l\'enseignant'},
+      {code:'AUT 3.1.4', label:'Comprendre qu\'un absent continue d\'exister pour le groupe'},
+      {code:'AUT 3.1.5', label:'Rester avec le groupe lors de périodes collectives'},
+      {code:'AUT 3.1.6', label:'Entrer en interaction avec un ou plusieurs élèves'},
+      {code:'AUT 3.1.7', label:'Interagir avec d\'autres groupes classe'},
+      {code:'AUT 3.1.8', label:'Oser demander la parole et s\'exprimer face au groupe'},
+      {code:'AUT 3.1.9', label:'Participer aux activités de groupe'},
+      {code:'AUT 3.1.10', label:'Se réjouir d\'être ensemble, partager succès et défaites'},
+      {code:'AUT 3.1.11', label:'Tenir compte des propositions de l\'autre'},
+      {code:'AUT 3.2.1', label:'Ranger le matériel en utilisant la signalétique'},
+      {code:'AUT 3.2.2', label:'Repérer la tâche attribuée et accepter le tour de rôle'},
+      {code:'AUT 3.2.3', label:'Respecter les espaces communs'},
+      {code:'AUT 3.2.4', label:'Avertir un adulte d\'un danger potentiel'},
+      {code:'AUT 3.2.5', label:'Participer à l\'élaboration des règles'},
+      {code:'AUT 3.2.6', label:'Énoncer la règle même en l\'absence de l\'adulte'},
+      {code:'AUT 3.2.7', label:'Respecter les règles de la classe et de l\'école'},
+      // Groupe 4 - Apprendre à apprendre
+      {code:'AUT 4.1.1', label:'Observer une situation pour se poser des questions'},
+      {code:'AUT 4.1.2', label:'Partager ses questions et observations'},
+      {code:'AUT 4.1.3', label:'S\'approprier une question exprimée par un autre'},
+      {code:'AUT 4.1.4', label:'Formuler ses représentations et connaissances antérieures'},
+      {code:'AUT 4.1.5', label:'Exprimer des hypothèses et suppositions'},
+      {code:'AUT 4.1.6', label:'Échanger des moyens de recherche avec les autres'},
+      {code:'AUT 4.1.7', label:'Choisir une piste de recherche'},
+      {code:'AUT 4.1.8', label:'Organiser le travail avec l\'aide de l\'adulte'},
+      {code:'AUT 4.1.9', label:'Explorer, tester, essayer, tâtonner, expérimenter'},
+      {code:'AUT 4.1.10', label:'Observer en suivant une démarche guidée'},
+      {code:'AUT 4.1.11', label:'Rechercher des informations dans des documents'},
+      {code:'AUT 4.1.12', label:'Consulter des personnes ressources'},
+      {code:'AUT 4.1.13', label:'Comparer des informations venant de deux sources'},
+      {code:'AUT 4.1.14', label:'Rassembler les informations sélectionnées'},
+      {code:'AUT 4.1.15', label:'Imiter la procédure proposée par un adulte ou pair'},
+      {code:'AUT 4.1.16', label:'Trier/classer les informations pertinentes'},
+      {code:'AUT 4.1.17', label:'Élaborer une réponse à la question de départ'},
+      {code:'AUT 4.1.18', label:'Organiser les informations à l\'aide d\'un support'},
+      {code:'AUT 4.1.19', label:'Communiquer oralement les informations'},
+      {code:'AUT 4.1.20', label:'Expliciter son avis, ses choix, sa pensée'},
+      {code:'AUT 4.2.1', label:'Différencier l\'action de l\'apprentissage'},
+      {code:'AUT 4.2.2', label:'Distinguer les normes de l\'école d\'autres milieux'},
+      {code:'AUT 4.2.3', label:'Distinguer la relation pédagogique de la relation affective'},
+      {code:'AUT 4.2.4', label:'Distinguer activité physique et activité cognitive'},
+      {code:'AUT 4.2.5', label:'Évoquer mentalement et restituer de différentes manières'},
+      {code:'AUT 4.2.6', label:'Chercher des exemples pour illustrer une idée'},
+      {code:'AUT 4.2.7', label:'Établir des liens avec le vécu scolaire'},
+      {code:'AUT 4.2.8', label:'Établir des liens avec le vécu individuel privé'},
+      {code:'AUT 4.2.9', label:'Exprimer une règle qui traduit un savoir'},
+      {code:'AUT 4.2.10', label:'Représenter des situations vécues avec des objets concrets'},
+      {code:'AUT 4.2.11', label:'Représenter des situations vécues par des images'},
+      {code:'AUT 4.2.12', label:'Utiliser les savoirs appris dans une situation nouvelle'},
+      {code:'AUT 4.2.13', label:'Répéter et réutiliser un mot, une phrase'},
+      {code:'AUT 4.2.14', label:'Exprimer les difficultés et demander de l\'aide'},
+      {code:'AUT 4.2.15', label:'Verbaliser ses démarches, expliquer son procédé'},
+      {code:'AUT 4.2.16', label:'Chercher des moyens de réguler sa démarche'},
+      {code:'AUT 4.2.17', label:'Écouter la démarche des autres pour se la réapproprier'},
+      {code:'AUT 4.2.18', label:'Comparer ses résultats avec ceux des autres'},
+      {code:'AUT 4.2.19', label:'Vérifier si les démarches ont permis d\'atteindre l\'objectif'},
+      {code:'AUT 4.2.20', label:'Vérifier que le résultat répond aux critères de réussite'},
+      {code:'AUT 4.3.1', label:'Maintenir une information active (garder en tête la consigne)'},
+      {code:'AUT 4.3.2', label:'Évoquer ses savoirs pour établir des liens'},
+      {code:'AUT 4.3.3', label:'Passer d\'un comportement à un autre selon l\'environnement'},
+      {code:'AUT 4.3.4', label:'Modifier sa façon de fonctionner si on s\'écarte des objectifs'},
+      {code:'AUT 4.3.5', label:'Rebondir lorsqu\'une erreur survient'},
+      {code:'AUT 4.3.6', label:'S\'empêcher de produire une réponse automatique non pertinente'},
+      {code:'AUT 4.3.7', label:'Résister aux bruits et distractions'},
+      {code:'AUT 4.3.8', label:'Attendre son tour avant de parler'},
+      {code:'AUT 4.3.9', label:'Suivre le rythme collectif'},
+      {code:'AUT 4.3.10', label:'Attendre la fin de la consigne avant d\'agir'},
+    ]
+  },
+  {
+    slug: 'psychomotricite', prefixes: ['PSY'], couleur: '#8B5CF6',
+    domaine: 'Psychomotricité',
+    competences: [
+      {code:'PSY 1.1.3', label:'Termes liés à la motricité'},
+      {code:'PSY 1.1.6', label:'Vocabulaire spécifique au matériel utilisé'},
+      {code:'PSY 1.1.9', label:'Effectuer les grands mouvements fondamentaux'},
+      {code:'PSY 1.1.12', label:'Termes liés à la coordination'},
+      {code:'PSY 1.1.15', label:'Coordonner des mouvements avec des objets'},
+      {code:'PSY 1.1.18', label:'Termes liés à la notion d\'équilibre'},
+      {code:'PSY 1.1.21', label:'Effectuer des mouvements et gestes liés à l\'équilibre'},
+      {code:'PSY 1.1.25', label:'S\'initier à l\'inhibition dans des grands mouvements'},
+      {code:'PSY 1.1.28', label:'Termes liés à la perception sensori-motrice'},
+      {code:'PSY 1.1.31', label:'Interpréter les stimulus pour agir efficacement'},
+      {code:'PSY 1.1.34', label:'Termes liés au schéma corporel'},
+      {code:'PSY 1.1.39', label:'Utiliser son corps comme référence pour s\'orienter'},
+      {code:'PSY 1.1.42', label:'Termes liés à l\'espace et aux mouvements'},
+      {code:'PSY 1.1.45', label:'Agir en modifiant les distances'},
+      {code:'PSY 1.1.48', label:'Agir en s\'adaptant aux distances et dimensions'},
+      {code:'PSY 1.1.51', label:'Agir en s\'adaptant aux directions et orientations'},
+      {code:'PSY 1.1.54', label:'Agir en s\'adaptant aux surfaces et formes'},
+      {code:'PSY 1.1.57', label:'Termes liés au temps et au rythme'},
+      {code:'PSY 1.1.60', label:'Effectuer des mouvements selon un rythme donné'},
+      {code:'PSY 1.2.5', label:'Nom du matériel et règles de sécurité'},
+      {code:'PSY 1.2.20', label:'Gestes et postures en psychomotricité fine'},
+      {code:'PSY 1.2.23', label:'Exercer des gestes graphiques pour améliorer l\'élan'},
+      {code:'PSY 1.3.3', label:'Communiquer par son corps des messages non-verbaux'},
+      {code:'PSY 1.3.6', label:'Interpréter des gestes, postures, mimiques'},
+      {code:'PSY 2.1.3', label:'Règles des jeux et de fonctionnement en psychomotricité'},
+      {code:'PSY 2.2.3', label:'Reconnaitre son appartenance à un groupe'},
+      {code:'PSY 3.1.5', label:'Respecter des règles de fonctionnement dans l\'espace'},
+      {code:'PSY 3.2.5', label:'Formuler des demandes explicites selon son ressenti'},
+      {code:'PSY 3.2.8', label:'Exprimer ses besoins physiologiques'},
+      {code:'PSY 4.1.3', label:'Utiliser ses habiletés motrices dans la vie quotidienne'},
+      {code:'PSY 4.1.6', label:'Se connaitre et développer une estime de soi'},
+      {code:'PSY 4.1.9', label:'Se mettre en jeu dans l\'action motrice'},
+      {code:'PSY 4.3.3', label:'Accepter, respecter, vivre des règles en psychomotricité'},
+      {code:'PSY 4.4.3', label:'Mobiliser des stratégies d\'attention et d\'inhibition'},
+      {code:'PSY 4.4.6', label:'Mobiliser des savoirs relatifs aux autres disciplines'},
+    ]
+  },
+  {
+    slug: 'plastique', prefixes: ['ECAP'], couleur: '#F59E0B',
+    domaine: 'Expression plastique',
+    competences: [
+      {code:'ECAP 1.1.7', label:'Identifier et décrire un mode d\'expression plastique'},
+      {code:'ECAP 1.1.14', label:'Percevoir les couleurs dans une production plastique'},
+      {code:'ECAP 1.1.21', label:'Repérer les lignes et formes dans l\'environnement'},
+      {code:'ECAP 1.2.7', label:'Réaliser les gestes techniques d\'une production plastique'},
+      {code:'ECAP 1.3.10', label:'Partager son ressenti face à une production plastique'},
+    ]
+  },
+  {
+    slug: 'expression_corp', prefixes: ['ECAF'], couleur: '#EC4899',
+    domaine: 'Expression corporelle',
+    competences: [
+      {code:'ECAF 3.2.5', label:'Bouger son corps, enchainer des mouvements'},
+      {code:'ECAF 3.2.12', label:'Manipuler des accessoires, s\'exprimer par le corps'},
+    ]
+  },
+  {
+    slug: 'musique', prefixes: ['ECAM'], couleur: '#10B981',
+    domaine: 'Expression musicale',
+    competences: [
+      {code:'ECAM 2.1.3', label:'Repérer le silence et la provenance d\'un son'},
+      {code:'ECAM 2.1.9', label:'Identifier des paysages sonores'},
+      {code:'ECAM 2.1.18', label:'Percevoir la pulsation et le tempo'},
+      {code:'ECAM 2.2.4', label:'Explorer sa respiration, produire des sons familiers'},
+      {code:'ECAM 2.2.10', label:'Produire des sons d\'intensités et durées différentes'},
+      {code:'ECAM 2.2.19', label:'Reconnaitre des tempos (lents, rapides)'},
+      {code:'ECAM 2.2.22', label:'S\'initier aux tempos en musique'},
+      {code:'ECAM 2.2.25', label:'Accompagner une chanson, exécuter une danse'},
+      {code:'ECAM 2.2.32', label:'Utiliser adéquatement des instruments de musique'},
+      {code:'ECAM 2.3.8', label:'Partager son ressenti face à une chanson ou extrait musical'},
+    ]
+  },
+  {
+    slug: 'fr_ecouter', prefixes: ['FREC'], couleur: '#6366F1',
+    domaine: 'Français - Écouter',
+    competences: [
+      {code:'FREC 2.2.3', label:'Termes fréquemment rencontrés dans le cadre scolaire'},
+      {code:'FREC 2.2.6', label:'Enrichir le bagage lexical pour comprendre un message'},
+      {code:'FREC 2.2.9', label:'Dégager le sens commun des mots'},
+      {code:'FREC 2.2.13', label:'Construire le sens du message entendu, comprendre une consigne'},
+      {code:'FREC 2.4.5', label:'Percevoir des réalités sonores de la langue'},
+    ]
+  },
+  {
+    slug: 'fr_parler', prefixes: ['FRP','FRPA'], couleur: '#0EA5E9',
+    domaine: 'Français - Parler',
+    competences: [
+      {code:'FRP 1.2.3', label:'Termes fréquemment rencontrés en contexte scolaire'},
+      {code:'FRP 1.2.6', label:'Enrichir le bagage lexical pour exprimer un message'},
+      {code:'FRP 1.2.11', label:'Créer des champs lexicaux, identifier des synonymes'},
+      {code:'FRP 1.4.3', label:'Élaborer des phrases syntaxiquement correctes'},
+      {code:'FRP 1.5.3', label:'Réciter des comptines, adopter une posture de prise de parole'},
+      {code:'FRP 1.5.6', label:'Développer une posture de prise de parole'},
+    ]
+  },
+  {
+    slug: 'fr_lire', prefixes: ['FRL','FRLI'], couleur: '#14B8A6',
+    domaine: 'Français - Lire',
+    competences: [
+      {code:'FRL 3.1.4', label:'Fonctions des écrits rencontrés en contexte scolaire'},
+      {code:'FRL 3.2.3', label:'Enrichir le bagage lexical pour comprendre un écrit'},
+      {code:'FRL 3.2.8', label:'Catégoriser des mots'},
+      {code:'FRL 3.2.13', label:'Repérer des informations explicites d\'un écrit'},
+      {code:'FRL 3.2.16', label:'Utiliser des éléments non verbaux pour comprendre un écrit'},
+      {code:'FRL 3.3.5', label:'Reconnaitre l\'organisation chronologique d\'un écrit'},
+    ]
+  },
+  {
+    slug: 'math_nombres', prefixes: ['FMN'], couleur: '#F97316',
+    domaine: 'Maths - Nombres',
+    competences: [
+      {code:'FMN 1.1.4', label:'Dégager l\'invariance du nombre'},
+      {code:'FMN 1.1.7', label:'S\'approprier l\'usage des doigts pour construire les nombres'},
+      {code:'FMN 1.1.10', label:'Lier l\'aspect ordinal et cardinal d\'un nombre'},
+      {code:'FMN 1.1.22', label:'Comparer des collections d\'objets selon leur quantité'},
+      {code:'FMN 1.1.25', label:'Représentations structurées des six premiers nombres'},
+      {code:'FMN 1.1.31', label:'L\'invariance du nombre et l\'aspect cardinal'},
+      {code:'FMN 1.1.39', label:'Dénombrer une collection, reconnaitre des représentations'},
+      {code:'FMN 1.1.47', label:'L\'écriture des nombres, la chaine numérique'},
+      {code:'FMN 1.1.57', label:'S\'approprier l\'aspect ordinal des nombres'},
+      {code:'FMN 1.2.8', label:'Identifier le sens des opérations'},
+    ]
+  },
+  {
+    slug: 'math_grandeurs', prefixes: ['FMGR'], couleur: '#EF4444',
+    domaine: 'Maths - Grandeurs',
+    competences: [
+      {code:'FMGR 3.1.5', label:'Comparer deux objets selon leur longueur ou masse'},
+      {code:'FMGR 3.1.8', label:'Comparer deux objets selon leur capacité ou aire'},
+      {code:'FMGR 3.2.5', label:'Partager une grandeur en deux parts égales'},
+      {code:'FMGR 3.2.8', label:'Recomposer la grandeur fractionnée'},
+    ]
+  },
+  {
+    slug: 'math_solides', prefixes: ['FMSF'], couleur: '#84CC16',
+    domaine: 'Maths - Solides et figures',
+    competences: [
+      {code:'FMSF 2.1.7', label:'Se placer, placer un objet dans l\'espace vécu'},
+      {code:'FMSF 2.1.12', label:'Vocabulaire spatial de déplacement'},
+      {code:'FMSF 2.1.21', label:'Vocabulaire spatial de position et déplacement'},
+      {code:'FMSF 2.2.16', label:'Produire l\'empreinte d\'une face d\'un solide'},
+    ]
+  },
+  {
+    slug: 'math_donnees', prefixes: ['FMTD'], couleur: '#A855F7',
+    domaine: 'Maths - Traitement de données',
+    competences: [
+      {code:'FMTD 4.1.7', label:'Organiser des objets selon un critère donné'},
+    ]
+  },
+  {
+    slug: 'manuelle_tech', prefixes: ['FMT'], couleur: '#78716C',
+    domaine: 'Formation manuelle et technique',
+    competences: [
+      {code:'FMT 1.2.5', label:'Utiliser des appareils techniques/technologiques'},
+    ]
+  },
+  {
+    slug: 'sci_matiere', prefixes: ['FSM'], couleur: '#06B6D4',
+    domaine: 'Sciences - La matière',
+    competences: [
+      {code:'FSM 2.1.9', label:'Dégager des qualités de matières selon les sens'},
+    ]
+  },
+  {
+    slug: 'sci_vivants', prefixes: ['FSV'], couleur: '#22C55E',
+    domaine: 'Sciences - Les vivants',
+    competences: [
+      {code:'FSV 1.1.3', label:'Termes désignant des parties du corps humain'},
+      {code:'FSV 1.1.6', label:'Situer sur son corps des parties du corps'},
+      {code:'FSV 1.1.15', label:'Caractériser les modes de déplacement humain et animal'},
+    ]
+  },
+  {
+    slug: 'sci_energie', prefixes: ['FSE'], couleur: '#FBBF24',
+    domaine: 'Sciences - L\'énergie',
+    competences: [
+      {code:'FSE 4.1.5', label:'S\'initier à des gestes respectueux de l\'environnement'},
+      {code:'FSE 4.1.8', label:'Distinguer les gestes de respect/non-respect de l\'environnement'},
+    ]
+  },
+  {
+    slug: 'monde_espace', prefixes: ['FHS'], couleur: '#F43F5E',
+    domaine: 'Formation humaine et sociale',
+    competences: [
+      {code:'FHS 0.13', label:'Dire qui je suis, présenter sa famille, reconnaitre des habitudes différentes'},
+      {code:'FHS 0.3', label:'Vocabulaire lié à l\'entourage, individu dans le groupe'},
+      {code:'FHS 1.1.3', label:'Vocabulaire lié à l\'orientation spatiale'},
+      {code:'FHS 1.1.11', label:'Identifier des repères fixes, se situer dans l\'espace'},
+      {code:'FHS 1.3.5', label:'Identifier les espaces selon leurs fonctions'},
+      {code:'FHS 2.4.3', label:'Observer des objets d\'aujourd\'hui et d\'hier pour les comparer'},
+    ]
+  },
+  {
+    slug: 'philo_citoyen', prefixes: ['EPC'], couleur: '#D97706',
+    domaine: 'Philosophie et citoyenneté',
+    competences: [
+      {code:'EPC 4.2.3', label:'Formules de politesse et de savoir-vivre'},
+    ]
+  },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 2. ANALYSE DES FICHIERS DOCX
+// ─────────────────────────────────────────────────────────────────────────────
+const MONTHS_FR = {
+  JAN:1, FEV:2, MAR:3, AVR:4, MAI:5, JUN:6,
+  JUL:7, AOU:8, SEP:9, OCT:10, NOV:11, DEC:12
+};
+
+function parseFilename(filename) {
+  // Format : MMM.J.X_TitreActivité.docx
+  const m = filename.match(/^([A-Z]+)\.(\d+)\.(\d+)_(.+)\.docx$/i);
+  if (!m) return null;
+  const [, monthCode, day, num, title] = m;
+  const month = MONTHS_FR[monthCode.toUpperCase()];
+  if (!month) return null;
+  // On déduit l'année depuis la date actuelle (on suppose l'année courante)
+  const year = new Date().getFullYear();
+  return { monthCode: monthCode.toUpperCase(), month, day: parseInt(day), num: parseInt(num), title, year,
+           dateKey: `${year}-${String(month).padStart(2,'0')}`,
+           dateLabel: `${monthCode.charAt(0)+monthCode.slice(1).toLowerCase()} ${year}` };
+}
+
+// Normalisation des codes : si pas de préfixe connu, on essaie AUT
+function normalizeCode(rawCode) {
+  const code = rawCode.trim();
+  // Déjà avec préfixe connu ?
+  const knownPrefixes = ['AUT','PSY','ECAP','ECAF','ECAM','FREC','FRP','FRPA','FRL','FRLI',
+                          'FMN','FMGR','FMSF','FMTD','FMT','FSM','FSV','FSE','FHS','EPC'];
+  for (const p of knownPrefixes) {
+    if (code.startsWith(p + ' ') || code.startsWith(p + '\t')) {
+      // Normaliser FRPA -> FRP, FRLI -> FRL
+      return code.replace('FRPA ','FRP ').replace('FRLI ','FRL ');
+    }
+  }
+  // Code sans préfixe (ex: 2.1.9) -> AUT
+  if (/^\d+\.\d+\.\d+$/.test(code)) return 'AUT ' + code;
+  return null;
+}
+
+async function extractCodesFromDocx(filepath) {
+  const result = await mammoth.extractRawText({path: filepath});
+  const text = result.value;
+  const lines = text.split('\n');
+  const codes = new Set();
+  let inSection2 = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (/^2\.?\s+Références/i.test(trimmed)) { inSection2 = true; continue; }
+    if (/^3\.?\s+(Démarche|Situation)/i.test(trimmed)) { inSection2 = false; }
+    if (!inSection2 || !trimmed) continue;
+    // On cherche les codes valides (1ère colonne du tableau)
+    const norm = normalizeCode(trimmed);
+    if (norm) codes.add(norm);
+  }
+  return codes;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3. MAIN
+// ─────────────────────────────────────────────────────────────────────────────
+async function main() {
+  const repoDir = __dirname;
+  const docxFiles = fs.readdirSync(repoDir)
+    .filter(f => f.endsWith('.docx') && f !== 'prepa_vierge.docx')
+    .sort();
+
+  console.log(`Analyse de ${docxFiles.length} fiche(s)...`);
+
+  const fiches = [];
+  for (const f of docxFiles) {
+    const info = parseFilename(f);
+    if (!info) { console.warn('  Fichier ignoré (nom non reconnu) :', f); continue; }
+    const codes = await extractCodesFromDocx(path.join(repoDir, f));
+    fiches.push({ filename: f, ...info, codes: [...codes] });
+    console.log(`  ${f} -> ${codes.size} compétence(s)`);
+  }
+
+  // Construire le set global de codes couverts
+  const allCodesUsed = new Set(fiches.flatMap(f => f.codes));
+
+  // Construire la carte des codes par mois/année
+  const byMonth = {};
+  for (const fiche of fiches) {
+    if (!byMonth[fiche.dateKey]) byMonth[fiche.dateKey] = { label: fiche.dateLabel, codes: new Set(), fiches: [] };
+    fiche.codes.forEach(c => byMonth[fiche.dateKey].codes.add(c));
+    byMonth[fiche.dateKey].fiches.push(fiche.filename);
+  }
+
+  // Statistiques par domaine
+  const statsParDomaine = REFERENTIELS.map(ref => {
+    const total = ref.competences.length;
+    const couverts = ref.competences.filter(c => allCodesUsed.has(c.code)).map(c => c.code);
+    const nonCouverts = ref.competences.filter(c => !allCodesUsed.has(c.code)).map(c => c.code);
+    const pct = total > 0 ? Math.round(couverts.length / total * 100) : 0;
+    return { ...ref, total, couverts, nonCouverts, pct };
+  });
+
+  generateHTML({ fiches, byMonth, statsParDomaine, allCodesUsed });
+  console.log('\nDashboard généré : dashboard.html');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4. GÉNÉRATION HTML
+// ─────────────────────────────────────────────────────────────────────────────
+function generateHTML({ fiches, byMonth, statsParDomaine, allCodesUsed }) {
+  const totalCompetences = REFERENTIELS.reduce((s, r) => s + r.competences.length, 0);
+  const totalCouvertes = allCodesUsed.size;
+  const totalPct = Math.round(totalCouvertes / totalCompetences * 100);
+
+  const months = Object.keys(byMonth).sort();
+  const allCodes = REFERENTIELS.flatMap(r => r.competences.map(c => ({...c, domaine: r.domaine, couleur: r.couleur})));
+
+  const statsJSON = JSON.stringify(statsParDomaine.map(s => ({
+    slug: s.slug, domaine: s.domaine, couleur: s.couleur,
+    total: s.total, couverts: s.couverts, nonCouverts: s.nonCouverts, pct: s.pct,
+    competences: s.competences
+  })));
+
+  const fichesJSON = JSON.stringify(fiches.map(f => ({
+    filename: f.filename, title: f.title,
+    dateKey: f.dateKey, dateLabel: f.dateLabel,
+    day: f.day, month: f.month, year: f.year,
+    codes: f.codes
+  })));
+
+  const byMonthJSON = JSON.stringify(Object.fromEntries(
+    Object.entries(byMonth).map(([k, v]) => [k, { label: v.label, codes: [...v.codes], fiches: v.fiches }])
+  ));
+
+  const generatedAt = new Date().toLocaleString('fr-BE', {timeZone: 'Europe/Brussels',
+    day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit'});
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard compétences - Ste-Ursule</title>
+<style>
+  :root {
+    --bg: #f8fafc; --card: #ffffff; --border: #e2e8f0;
+    --text: #1e293b; --muted: #64748b; --accent: #3b82f6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+  header { background: #1e3a5f; color: white; padding: 20px 24px; }
+  header h1 { font-size: 1.4rem; font-weight: 700; }
+  header p { font-size: 0.85rem; opacity: 0.75; margin-top: 4px; }
+
+  .tabs { display: flex; background: white; border-bottom: 2px solid var(--border); padding: 0 20px; gap: 4px; }
+  .tab { padding: 12px 20px; cursor: pointer; font-size: 0.9rem; font-weight: 500;
+         color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all .2s; }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab:hover:not(.active) { color: var(--text); background: var(--bg); }
+
+  .page { display: none; padding: 20px; max-width: 1200px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* Carte globale */
+  .hero { background: linear-gradient(135deg, #1e3a5f, #2563eb); color: white;
+          border-radius: 12px; padding: 28px; margin-bottom: 20px; display: flex; align-items: center; gap: 28px; }
+  .hero-ring { position: relative; width: 100px; height: 100px; flex-shrink: 0; }
+  .hero-ring svg { width: 100px; height: 100px; transform: rotate(-90deg); }
+  .hero-ring-label { position: absolute; inset: 0; display: flex; flex-direction: column;
+                     align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; }
+  .hero-ring-label small { font-size: 0.7rem; font-weight: 400; opacity: 0.8; }
+  .hero-text h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 6px; }
+  .hero-text p { opacity: 0.85; font-size: 0.9rem; }
+
+  /* Grille domaines */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+          padding: 16px; cursor: pointer; transition: box-shadow .2s; }
+  .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.1); }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .card-title { font-size: 0.85rem; font-weight: 600; }
+  .badge { font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: 20px; color: white; }
+  .bar-bg { background: #e2e8f0; border-radius: 6px; height: 8px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 6px; transition: width .6s; }
+  .card-stats { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--muted); margin-top: 8px; }
+
+  /* Vue mois */
+  .month-section { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+                   margin-bottom: 16px; overflow: hidden; }
+  .month-header { display: flex; align-items: center; justify-content: space-between;
+                  padding: 14px 18px; background: #f1f5f9; cursor: pointer; }
+  .month-header h3 { font-size: 1rem; font-weight: 700; }
+  .month-meta { font-size: 0.82rem; color: var(--muted); }
+  .month-body { padding: 16px 18px; display: none; }
+  .month-body.open { display: block; }
+  .fiche-tag { display: inline-block; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;
+               border-radius: 6px; padding: 3px 9px; font-size: 0.78rem; margin: 2px; }
+  .codes-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .code-chip { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+               color: white; opacity: 0.9; }
+
+  /* Vue détail domaine */
+  .domain-detail { display: none; }
+  .domain-detail.open { display: block; }
+  .back-btn { background: none; border: 1px solid var(--border); border-radius: 6px;
+              padding: 6px 14px; font-size: 0.85rem; cursor: pointer; margin-bottom: 16px;
+              color: var(--muted); }
+  .back-btn:hover { background: var(--bg); }
+  .comp-list { display: flex; flex-direction: column; gap: 6px; }
+  .comp-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+               border-radius: 8px; border: 1px solid var(--border); font-size: 0.84rem; }
+  .comp-item.covered { background: #f0fdf4; border-color: #86efac; }
+  .comp-item.missing { background: #fef2f2; border-color: #fca5a5; }
+  .comp-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .comp-code { font-weight: 700; font-size: 0.78rem; min-width: 90px; color: var(--muted); }
+  .comp-label { flex: 1; color: var(--text); }
+  .comp-when { font-size: 0.75rem; color: var(--muted); text-align: right; }
+
+  /* Bilan annuel */
+  .year-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+  .year-table th { background: #f1f5f9; padding: 10px 14px; text-align: left; font-weight: 600;
+                   border-bottom: 2px solid var(--border); }
+  .year-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .year-table tr:hover td { background: #f8fafc; }
+
+  .progress-mini { display: flex; align-items: center; gap: 8px; }
+  .progress-mini .bar-bg { flex: 1; }
+  .progress-mini span { min-width: 40px; text-align: right; font-weight: 600; }
+
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+                background: white; font-size: 0.8rem; cursor: pointer; transition: all .2s; }
+  .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+  .notice { font-size: 0.78rem; color: var(--muted); text-align: right; padding: 10px 0 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Suivi des compétences FWB - M1 Les abeilles</h1>
+  <p>Ste-Ursule Maternelles Laeken - Isabelle Giboux - Généré le ${generatedAt}</p>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('vue-globale')">Vue globale</div>
+  <div class="tab" onclick="switchTab('vue-mois')">Par mois</div>
+  <div class="tab" onclick="switchTab('vue-annee')">Bilan annuel</div>
+</div>
+
+<!-- VUE GLOBALE -->
+<div class="page active" id="vue-globale">
+  <div class="hero">
+    <div class="hero-ring">
+      <svg viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="10"/>
+        <circle cx="50" cy="50" r="42" fill="none" stroke="white" stroke-width="10"
+                stroke-dasharray="${Math.round(totalPct * 2.638)} 263.8" stroke-linecap="round"/>
+      </svg>
+      <div class="hero-ring-label">${totalPct}%<small>global</small></div>
+    </div>
+    <div class="hero-text">
+      <h2>${totalCouvertes} compétences couvertes sur ${totalCompetences}</h2>
+      <p>${fiches.length} fiche(s) analysée(s) - ${months.length} mois actif(s)</p>
+    </div>
+  </div>
+
+  <div id="domains-grid" class="grid"></div>
+  <div id="domain-detail" class="domain-detail"></div>
+  <p class="notice">Cliquer sur un domaine pour voir le détail des compétences</p>
+</div>
+
+<!-- VUE MOIS -->
+<div class="page" id="vue-mois">
+  <div id="month-list"></div>
+</div>
+
+<!-- VUE ANNEE -->
+<div class="page" id="vue-annee">
+  <div class="filter-bar" id="year-filters"></div>
+  <table class="year-table" id="year-table">
+    <thead><tr>
+      <th>Domaine</th>
+      <th>Compétences couvertes</th>
+      <th>Progression</th>
+      <th>Non couvertes</th>
+    </tr></thead>
+    <tbody id="year-tbody"></tbody>
+  </table>
+</div>
+
+<script>
+const STATS = ${statsJSON};
+const FICHES = ${fichesJSON};
+const BY_MONTH = ${byMonthJSON};
+
+// Couleur par code
+const codeToColor = {};
+const codeToMonth = {};
+STATS.forEach(s => s.competences.forEach(c => { codeToColor[c.code] = s.couleur; }));
+FICHES.forEach(f => f.codes.forEach(c => {
+  if (!codeToMonth[c]) codeToMonth[c] = [];
+  codeToMonth[c].push(f.dateLabel);
+}));
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const ids = ['vue-globale','vue-mois','vue-annee'];
+    t.classList.toggle('active', ids[i] === id);
+  });
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === id));
+}
+
+// ── VUE GLOBALE ──
+function renderGrid() {
+  const grid = document.getElementById('domains-grid');
+  grid.innerHTML = STATS.map(s => \`
+    <div class="card" onclick="showDomainDetail('\${s.slug}')">
+      <div class="card-header">
+        <span class="card-title">\${s.domaine}</span>
+        <span class="badge" style="background:\${s.couleur}">\${s.pct}%</span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" style="width:\${s.pct}%;background:\${s.couleur}"></div></div>
+      <div class="card-stats">
+        <span>\${s.couverts.length} / \${s.total} couvertes</span>
+        <span style="color:#ef4444">\${s.nonCouverts.length} manquantes</span>
+      </div>
+    </div>
+  \`).join('');
+}
+
+function showDomainDetail(slug) {
+  const s = STATS.find(x => x.slug === slug);
+  if (!s) return;
+  document.getElementById('domains-grid').style.display = 'none';
+  const detail = document.getElementById('domain-detail');
+  detail.classList.add('open');
+
+  const items = s.competences.map(c => {
+    const covered = s.couverts.includes(c.code);
+    const when = covered && codeToMonth[c.code] ? codeToMonth[c.code].join(', ') : '';
+    return \`<div class="comp-item \${covered?'covered':'missing'}">
+      <div class="comp-dot" style="background:\${covered?'#22c55e':'#ef4444'}"></div>
+      <span class="comp-code">\${c.code}</span>
+      <span class="comp-label">\${c.label}</span>
+      \${when ? \`<span class="comp-when">\${when}</span>\` : ''}
+    </div>\`;
+  }).join('');
+
+  detail.innerHTML = \`
+    <button class="back-btn" onclick="closeDetail()">← Retour</button>
+    <div class="hero" style="margin-bottom:16px">
+      <div class="hero-ring">
+        <svg viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="10"/>
+          <circle cx="50" cy="50" r="42" fill="none" stroke="white" stroke-width="10"
+                  stroke-dasharray="\${Math.round(s.pct*2.638)} 263.8" stroke-linecap="round"/>
+        </svg>
+        <div class="hero-ring-label">\${s.pct}%<small></small></div>
+      </div>
+      <div class="hero-text">
+        <h2>\${s.domaine}</h2>
+        <p>\${s.couverts.length} couvertes - \${s.nonCouverts.length} non couvertes</p>
+      </div>
+    </div>
+    <div class="comp-list">\${items}</div>
+  \`;
+}
+
+function closeDetail() {
+  document.getElementById('domains-grid').style.display = 'grid';
+  const detail = document.getElementById('domain-detail');
+  detail.classList.remove('open');
+  detail.innerHTML = '';
+}
+
+// ── VUE MOIS ──
+function renderMonths() {
+  const list = document.getElementById('month-list');
+  const months = Object.keys(BY_MONTH).sort();
+  if (!months.length) { list.innerHTML = '<p style="color:#64748b;padding:20px">Aucune fiche analysée.</p>'; return; }
+
+  list.innerHTML = months.map(mk => {
+    const m = BY_MONTH[mk];
+    const codesArr = m.codes;
+    const chips = codesArr.map(c => {
+      const col = codeToColor[c] || '#64748b';
+      return \`<span class="code-chip" style="background:\${col}">\${c}</span>\`;
+    }).join('');
+
+    // Stats par domaine pour ce mois
+    const domStats = STATS.map(s => {
+      const cnt = s.couverts.filter(c => codesArr.includes(c)).length;
+      return cnt > 0 ? \`<span class="fiche-tag" style="background:none;color:\${s.couleur};border-color:\${s.couleur}">\${s.domaine.split(' - ').pop()}: \${cnt}</span>\` : '';
+    }).filter(Boolean).join('');
+
+    const fiches = m.fiches.map(f => \`<span class="fiche-tag">\${f.replace('.docx','')}</span>\`).join('');
+
+    return \`
+      <div class="month-section">
+        <div class="month-header" onclick="toggleMonth('\${mk}')">
+          <h3>\${m.label}</h3>
+          <span class="month-meta">\${codesArr.length} compétence(s) - \${m.fiches.length} fiche(s)</span>
+        </div>
+        <div class="month-body" id="month-\${mk}">
+          <div style="margin-bottom:10px">\${fiches}</div>
+          <div style="margin-bottom:10px">\${domStats}</div>
+          <div class="codes-grid">\${chips}</div>
+        </div>
+      </div>\`;
+  }).join('');
+}
+
+function toggleMonth(mk) {
+  const el = document.getElementById('month-' + mk);
+  el.classList.toggle('open');
+}
+
+// ── VUE ANNEE ──
+function renderYear() {
+  const tbody = document.getElementById('year-tbody');
+  tbody.innerHTML = STATS.map(s => {
+    const bar = \`<div class="progress-mini">
+      <div class="bar-bg" style="flex:1">
+        <div class="bar-fill" style="width:\${s.pct}%;background:\${s.couleur};height:8px;border-radius:6px"></div>
+      </div>
+      <span>\${s.pct}%</span>
+    </div>\`;
+    return \`<tr>
+      <td><strong>\${s.domaine}</strong></td>
+      <td>\${s.couverts.length} / \${s.total}</td>
+      <td>\${bar}</td>
+      <td style="color:#ef4444">\${s.nonCouverts.length}</td>
+    </tr>\`;
+  }).join('');
+}
+
+// Init
+renderGrid();
+renderMonths();
+renderYear();
+// Ouvrir le 1er mois par défaut
+const firstMonth = Object.keys(BY_MONTH).sort()[0];
+if (firstMonth) document.getElementById('month-' + firstMonth)?.classList.add('open');
+</script>
+</body>
+</html>`;
+
+  fs.writeFileSync(path.join(__dirname, 'dashboard.html'), html, 'utf8');
+}
+
+main().catch(err => { console.error(err); process.exit(1); });
