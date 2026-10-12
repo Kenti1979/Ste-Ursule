@@ -344,19 +344,53 @@ const doc = new Document({
       h1('6. Déroulement pédagogique'),
 
       h2("A. Activité initiale - Phase d'accroche"),
-      doubleEntreeTable(2),
+      (() => {
+        const W = Math.floor(TW / 2); const W2 = TW - W;
+        return mkTable([
+          headerRow(["Actions / Interventions de l'enseignant(e)", 'Activités / Productions des élèves'], [W, W2]),
+          new TableRow({ children: [
+            tc('Présente le potimarron et le butternut à la classe réunie. Pose des questions : "Qui connaît ce légume ? Quelle couleur ? Comment s\'appelle-t-il ?"', { w: W }),
+            tc('Observent, touchent, sentent les légumes. Tentent de les nommer et partagent leurs observations avec le groupe.', { w: W2 }),
+          ], height: { value: 560, rule: 'atLeast' } }),
+          new TableRow({ children: [
+            tc('Explique les étapes de l\'activité et les règles de sécurité. Invite les enfants à se laver les mains.', { w: W }),
+            tc('Écoutent les consignes. Se lavent les mains avant de commencer l\'activité.', { w: W2 }),
+          ], height: { value: 560, rule: 'atLeast' } }),
+        ], [W, W2]);
+      })(),
       p([new TextRun({ text: 'Rappel des prérequis / acquis antérieurs :', bold: true })], { before: 120, after: 60 }),
-      ...dotLine(2),
+      p('Les enfants ont déjà manipulé des légumes lors d\'activités précédentes. Certains ont peut-être cuisiné à la maison.', { before: 0, after: 60 }),
       p([new TextRun({ text: 'Situation-problème / Élément déclencheur :', bold: true })], { before: 120, after: 60 }),
-      ...dotLine(2),
+      p('Arrivée des légumes (potimarron et butternut) dans la classe : "Qu\'est-ce que c\'est ? Comment peut-on les manger ?"', { before: 0, after: 60 }),
       p([new TextRun({ text: 'Annonce du sujet (ce que nous allons apprendre et pourquoi) :', bold: true })], { before: 120, after: 60 }),
-      ...dotLine(2),
+      p('Aujourd\'hui, nous allons préparer une soupe d\'Halloween avec nos amis de 3ème maternelle et deux parents. Nous allons éplucher les légumes et utiliser le soupmaker.', { before: 0, after: 60 }),
 
       h2('B. Activité principale - Cœur de la leçon'),
-      doubleEntreeTable(4),
+      (() => {
+        const W = Math.floor(TW / 2); const W2 = TW - W;
+        return mkTable([
+          headerRow(["Actions / Interventions de l'enseignant(e)", 'Activités / Productions des élèves'], [W, W2]),
+          new TableRow({ children: [
+            tc('Organise les groupes avec les collègues et les deux parents. Montre comment utiliser l\'éplucheur en faisant une démonstration.', { w: W }),
+            tc('Observent la démonstration avec attention.', { w: W2 }),
+          ], height: { value: 560, rule: 'atLeast' } }),
+          new TableRow({ children: [
+            tc('Supervise l\'épluchage avec les adultes présents. Guide le geste, rassure, encourage.', { w: W }),
+            tc('Épluchent les légumes avec l\'éplucheur, sous supervision adulte.', { w: W2 }),
+          ], height: { value: 560, rule: 'atLeast' } }),
+          new TableRow({ children: [
+            tc('Montre comment retirer les pépins à la cuillère. Les adultes encadrent chaque groupe.', { w: W }),
+            tc('Retirent les pépins à la cuillère et les déposent dans le bassin.', { w: W2 }),
+          ], height: { value: 560, rule: 'atLeast' } }),
+          new TableRow({ children: [
+            tc('Place les morceaux dans le soupmaker avec les enfants. Ajoute l\'eau, l\'oignon et le cube bouillon. Lance la cuisson.', { w: W }),
+            tc('Déposent les morceaux dans le soupmaker. Observent et attendent la cuisson. Sentent les odeurs qui se dégagent.', { w: W2 }),
+          ], height: { value: 560, rule: 'atLeast' } }),
+        ], [W, W2]);
+      })(),
 
       h2('C. Synthèse / Institutionnalisation - Trace écrite'),
-      ...dotLine(4),
+      p('La soupe est servie en gobelet. L\'enseignante invite les enfants à décrire le goût, la couleur et l\'odeur. Retour collectif oral sur les différentes étapes réalisées ensemble : "Qu\'avons-nous fait en premier ? Et ensuite ?"', { before: 60, after: 60 }),
 
       // -- 6D : cases à cocher (pas de tirets) ---------------------------------
       h2('D. Évaluation formative'),
