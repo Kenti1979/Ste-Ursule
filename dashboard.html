@@ -28,6 +28,26 @@
     border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; }
   .refresh-btn.loading .spinner { display: block; }
   .refresh-btn.loading .btn-icon { display: none; }
+
+  /* Modal token */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: white; border-radius: 12px; padding: 28px; max-width: 460px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+  .modal h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; color: #1e293b; }
+  .modal p { font-size: 0.85rem; color: #64748b; margin-bottom: 16px; line-height: 1.5; }
+  .modal label { font-size: 0.82rem; font-weight: 600; color: #374151; display: block; margin-bottom: 6px; }
+  .modal input { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px;
+    font-size: 0.88rem; font-family: monospace; outline: none; }
+  .modal input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px #dbeafe; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 18px; justify-content: flex-end; }
+  .modal-actions .btn-cancel { background: none; border: 1px solid #d1d5db; border-radius: 8px;
+    padding: 8px 16px; font-size: 0.85rem; cursor: pointer; color: #64748b; }
+  .modal-actions .btn-save { background: #1e3a5f; color: white; border: none; border-radius: 8px;
+    padding: 8px 20px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  .modal-actions .btn-save:hover { background: #2563eb; }
+  .modal-hint { font-size: 0.75rem; color: #9ca3af; margin-top: 10px; }
+  .modal-hint a { color: #3b82f6; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .progress-bar { height: 3px; background: #e2e8f0; }
@@ -123,16 +143,38 @@
 </head>
 <body>
 
+<!-- Modal token -->
+<div class="modal-overlay" id="tokenModal">
+  <div class="modal">
+    <h2>🔐 Accès au dépôt privé</h2>
+    <p>Ce dashboard lit les fiches directement depuis GitHub. Comme le dépôt est privé, un token d'accès personnel est nécessaire.</p>
+    <label for="tokenInput">Personal Access Token GitHub</label>
+    <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off"/>
+    <div class="modal-hint">
+      Créer un token : <a href="https://github.com/settings/tokens/new?scopes=repo&description=Dashboard+Ste-Ursule" target="_blank">github.com/settings/tokens</a> (scope : <code>repo</code>)<br>
+      Le token est enregistré uniquement sur cet appareil (localStorage).
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeTokenModal()">Annuler</button>
+      <button class="btn-save" onclick="saveToken()">Enregistrer et actualiser</button>
+    </div>
+  </div>
+</div>
+
 <header>
   <div>
     <h1>Suivi des compétences FWB - M1 Les abeilles</h1>
     <p>Ste-Ursule Maternelles Laeken - Isabelle Giboux</p>
   </div>
-  <button class="refresh-btn" id="refreshBtn" onclick="refreshDashboard()">
-    <span class="btn-icon">🔄</span>
-    <div class="spinner"></div>
-    Actualiser
-  </button>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button class="refresh-btn" id="tokenBtn" onclick="openTokenModal()" title="Configurer le token GitHub"
+            style="background:rgba(255,255,255,0.15);color:white;padding:10px 12px;font-size:1rem">🔑</button>
+    <button class="refresh-btn" id="refreshBtn" onclick="refreshDashboard()">
+      <span class="btn-icon">🔄</span>
+      <div class="spinner"></div>
+      Actualiser
+    </button>
+  </div>
 </header>
 
 <div class="progress-bar"><div class="progress-bar-fill" id="progressFill"></div></div>
@@ -569,7 +611,37 @@ function setProgress(pct) {
   document.getElementById('progressFill').style.width = pct + '%';
 }
 
+function getToken() {
+  try { return localStorage.getItem('gh_token') || ''; } catch(e) { return ''; }
+}
+function ghHeaders() {
+  const t = getToken();
+  const h = {'Accept': 'application/vnd.github.v3+json'};
+  if (t) h['Authorization'] = 'token ' + t;
+  return h;
+}
+function openTokenModal() {
+  try { document.getElementById('tokenInput').value = localStorage.getItem('gh_token') || ''; } catch(e) {}
+  document.getElementById('tokenModal').classList.add('open');
+  setTimeout(() => document.getElementById('tokenInput').focus(), 100);
+}
+function closeTokenModal() {
+  document.getElementById('tokenModal').classList.remove('open');
+}
+function saveToken() {
+  const val = document.getElementById('tokenInput').value.trim();
+  try { localStorage.setItem('gh_token', val); } catch(e) {}
+  closeTokenModal();
+  refreshDashboard();
+}
+
 async function refreshDashboard() {
+  const token = getToken();
+  if (!token) {
+    openTokenModal();
+    return;
+  }
+
   const btn = document.getElementById('refreshBtn');
   btn.disabled = true;
   btn.classList.add('loading');
@@ -579,7 +651,13 @@ async function refreshDashboard() {
     // 1. Lister les fichiers du repo
     setStatus('Connexion à GitHub...');
     const contentsUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/`;
-    const resp = await fetch(contentsUrl, {headers: {'Accept': 'application/vnd.github.v3+json'}});
+    const resp = await fetch(contentsUrl, {headers: ghHeaders()});
+    if (resp.status === 401 || resp.status === 403) {
+      btn.disabled = false; btn.classList.remove('loading'); setProgress(0);
+      setStatus('Token invalide ou expiré. Cliquez sur 🔑 pour le mettre à jour.', 'error');
+      openTokenModal();
+      return;
+    }
     if (!resp.ok) throw new Error(`GitHub API : ${resp.status} ${resp.statusText}`);
     const contents = await resp.json();
     setProgress(10);
@@ -606,7 +684,7 @@ async function refreshDashboard() {
       setProgress(10 + Math.round(85 * (i / docxFiles.length)));
 
       const rawUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${encodeURIComponent(f.name)}`;
-      const fileResp = await fetch(rawUrl);
+      const fileResp = await fetch(rawUrl, {headers: ghHeaders()});
       if (!fileResp.ok) { console.warn('Erreur téléchargement', f.name); continue; }
       const buffer = await fileResp.arrayBuffer();
       const codes = await extractCodesFromArrayBuffer(buffer);
@@ -913,6 +991,8 @@ try {
     const data = JSON.parse(cached);
     renderDashboard(data);
     setStatus(`Données en cache du ${data.generatedAt || '?'} - Cliquez "Actualiser" pour recharger depuis GitHub.`);
+  } else if (!localStorage.getItem('gh_token')) {
+    setStatus('Bienvenue - Cliquez sur 🔑 pour configurer votre token GitHub, puis "Actualiser".');
   }
 } catch(e) {}
 </script>
