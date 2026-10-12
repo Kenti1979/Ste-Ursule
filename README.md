@@ -22,6 +22,22 @@ Le dépôt GitHub https://github.com/Kenti1979/Ste-Ursule est accessible en lect
 > git push
 > ```
 
+## RÈGLE ABSOLUE : caractères accentués en Unicode dans le script JS
+
+> **Dans le script Node.js de génération, tous les caractères accentués ou spéciaux doivent être écrits sous forme d'échappements Unicode (`\uXXXX`), jamais en caractère littéral.**
+>
+> Exemples obligatoires :
+> - `é` → `é` | `è` → `è` | `ê` → `ê` | `ë` → `ë`
+> - `à` → `à` | `â` → `â` | `î` → `î` | `ï` → `ï`
+> - `ô` → `ô` | `û` → `û` | `ù` → `ù` | `ü` → `ü`
+> - `ç` → `ç` | `œ` → `œ` | `æ` → `æ`
+> - `É` → `É` | `È` → `È` | `Ê` → `Ê` | `À` → `À`
+> - `Î` → `Î` | `Ô` → `Ô` | `Û` → `Û` | `Ç` → `Ç`
+> - `Œ` → `Œ` | `«` → `«` | `»` → `»` | `'` → `’`
+> - `°` → `°` | `–` → `–` | `N°` → `N°`
+>
+> Cette règle s'applique à TOUTES les chaînes de texte dans le script : titres, contenus de cellules, labels, descriptions, textes de cases à cocher, pied de page, etc.
+
 ## Règles générales
 - Générer les fichiers Word au nom de **Giboux Isabelle**
 - Langage humain, accessible, adapté au contexte maternel
@@ -121,12 +137,13 @@ Cases à cocher (☐), pas de tirets.
 2. Lire les référentiels JSON concernés pour trouver les codes et intitulés exacts
 3. Copier le script vers /home/claude/prepa_template.js
 4. Adapter UNIQUEMENT le contenu (ne jamais toucher à la structure)
-5. Remplir INTÉGRALEMENT toutes les sections (aucun texte entre crochets dans le .docx final)
-6. Générer le .docx : node prepa_template.js
-7. Vérifier visuellement (PDF)
-8. Nommer le fichier selon la convention MMM.J.X_Titre.docx
-9. Copier le fichier dans /home/claude/ste-ursule/
-10. PUSH GIT (obligatoire) :
+5. Remplacer TOUS les caractères accentués par leurs échappements Unicode (\uXXXX)
+6. Remplir INTÉGRALEMENT toutes les sections (aucun texte entre crochets dans le .docx final)
+7. Générer le .docx : node prepa_template.js
+8. Vérifier visuellement (PDF)
+9. Nommer le fichier selon la convention MMM.J.X_Titre.docx
+10. Copier le fichier dans /home/claude/ste-ursule/
+11. PUSH GIT (obligatoire) :
    git add NomDuFichier.docx
    git commit -m "Ajout fiche NomDuFichier"
    git push
