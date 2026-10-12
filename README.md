@@ -8,8 +8,19 @@ Répertoire de préparation pour Giboux Isabelle, enseignante en maternelle (Fé
 ## Dépôt Git
 Le dépôt GitHub https://github.com/Kenti1979/Ste-Ursule est accessible en lecture et en écriture.
 - Chemin local (à cloner si absent) : `/home/claude/ste-ursule`
-- Les fichiers Word générés doivent y être poussés après création.
 - Le template vierge `prepa_vierge.docx` et le script `prepa_template.js` sont dans ce dépôt.
+
+## RÈGLE ABSOLUE : push Git obligatoire
+
+> **Chaque fichier .docx généré DOIT être poussé sur le dépôt git https://github.com/Kenti1979/Ste-Ursule immédiatement après génération.**
+>
+> Ce n'est pas une étape optionnelle. C'est la dernière étape obligatoire de chaque fiche.
+> Commandes à exécuter (depuis `/home/claude/ste-ursule`) :
+> ```
+> git add NomDuFichier.docx
+> git commit -m "Ajout fiche NomDuFichier"
+> git push
+> ```
 
 ## Règles générales
 - Générer les fichiers Word au nom de **Giboux Isabelle**
@@ -18,6 +29,18 @@ Le dépôt GitHub https://github.com/Kenti1979/Ste-Ursule est accessible en lect
 - Basé sur des sources officielles (référentiels FWB)
 - But principal : identifier et lier les compétences officielles à une description d'activité
 - Toujours mettre les accents
+
+## RÈGLE ABSOLUE : document toujours entièrement complété
+
+> **Chaque section du document doit être remplie avec du contenu réel, adapté à l'activité. Aucune ligne, aucune case, aucun tableau ne peut rester vide ou avec un texte générique entre crochets.**
+>
+> En particulier, la **section 6 - Déroulement pédagogique** doit TOUJOURS contenir :
+> - **6A** : tableau double entrée rempli (actions enseignante / activités élèves), rappel des prérequis, élément déclencheur, annonce du sujet - tous en texte réel
+> - **6B** : tableau double entrée rempli avec le déroulement concret de l'activité (minimum 3-4 lignes)
+> - **6C** : texte réel décrivant la synthèse, la verbalisation et la trace
+> - **6D** : cases à cocher avec formulations adaptées à l'activité (pas de texte générique entre crochets)
+>
+> De même, la **section 5 - Objectifs** doit avoir des prérequis et des capacités réels, et la **section 8 - Matériel** doit lister le matériel fourni.
 
 ## Informations obligatoires pour créer une fiche
 Avant de générer une fiche, s'assurer que ces 7 éléments sont fournis.
@@ -98,10 +121,15 @@ Cases à cocher (☐), pas de tirets.
 2. Lire les référentiels JSON concernés pour trouver les codes et intitulés exacts
 3. Copier le script vers /home/claude/prepa_template.js
 4. Adapter UNIQUEMENT le contenu (ne jamais toucher à la structure)
-5. Générer le .docx : node prepa_template.js
-6. Vérifier visuellement (PDF)
-7. Nommer le fichier selon la convention MMM.J.X_Titre.docx
-8. Pousser sur git et envoyer à Isabelle
+5. Remplir INTÉGRALEMENT toutes les sections (aucun texte entre crochets dans le .docx final)
+6. Générer le .docx : node prepa_template.js
+7. Vérifier visuellement (PDF)
+8. Nommer le fichier selon la convention MMM.J.X_Titre.docx
+9. Copier le fichier dans /home/claude/ste-ursule/
+10. PUSH GIT (obligatoire) :
+   git add NomDuFichier.docx
+   git commit -m "Ajout fiche NomDuFichier"
+   git push
 ```
 
 ### Caractéristiques du template (version octobre 2026)
